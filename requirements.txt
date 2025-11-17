@@ -1,8 +1,17 @@
-streamlit==1.24.1
-openai==0.28.0
+# Streamlit 框架
 streamlit==1.30.0
-numpy
-opencv-python-headless
-torch==2.1.0
-torchvision==0.16.0
-Pillow
+
+# OpenAI API
+openai==0.28.0
+
+# 数值计算
+numpy==1.25.2
+
+# 图像处理
+opencv-python-headless==4.8.1.78
+Pillow==10.0.0
+
+# PyTorch CPU 版本
+torch==2.1.0+cpu
+torchvision==0.16.0+cpu
+-f https://download.pytorch.org/whl/torch_stable.html
