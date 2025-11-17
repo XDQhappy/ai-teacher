@@ -1,105 +1,213 @@
+# # app.py
+# import streamlit as st
+# from lesson_plan_generator import generate_lesson_plan
+# from socratic_ai import ask_socratic
+# from kimi_ppt import generate_ppt_with_kimi
+# from datetime import date
+#
+# # ======================
+# # Streamlit 页面配置
+# # ======================
+# st.set_page_config(page_title="教学方案 + 苏格拉底问答", layout="wide")
+# st.title("📚 AI 教学方案 + 苏格拉底问答")
+#
+# col1, col2 = st.columns(2)
+#
+# # ----------------------
+# # 左侧：教案 + Kimi PPT
+# # ----------------------
+# with col1:
+#     st.header("生成教案")
+#     lesson_title = st.text_input("课程名称", placeholder="例如：光合作用")
+#     subject = st.text_input("学科", placeholder="例如：生物")
+#     grade = st.number_input("年级", 1, 12)
+#     duration = st.number_input("课时数", 1, 10)
+#     key_vocab = st.text_input("关键词汇，用逗号分隔")
+#     supporting_materials = st.text_area("辅助材料与资源，用逗号分隔")
+#
+#     # 生成教案按钮
+#     if st.button("🚀 生成教案"):
+#         if not lesson_title or not subject:
+#             st.warning("请填写课程名称和学科")
+#         else:
+#             with st.spinner("🧠 AI 正在生成教案，请稍候..."):
+#                 lesson_text = generate_lesson_plan(
+#                     lesson_title, subject, grade, duration,
+#                     key_vocab, supporting_materials
+#                 )
+#                 st.session_state["lesson_text"] = lesson_text
+#             st.success("✅ 教案生成完成！")
+#
+#     # 教案未生成 → 清空按钮显示在生成教案下
+#     if "lesson_text" not in st.session_state:
+#         if st.button("🗑️ 清空教案与 PPT"):
+#             st.session_state.pop("lesson_text", None)
+#             st.session_state.pop("ppt_url", None)
+#             st.success("已清空教案与 PPT，可重新生成。")
+#
+#     # 显示教案
+#     if "lesson_text" in st.session_state:
+#         st.subheader("📘 教学方案")
+#         st.markdown(st.session_state["lesson_text"])
+#         st.download_button(
+#             "📥 下载教案文本",
+#             data=st.session_state["lesson_text"],
+#             file_name=f"教学方案_{date.today()}.txt",
+#             mime="text/plain"
+#         )
+#
+#         # Kimi PPT 生成按钮
+#         if st.button("🎨 生成 PPT（Kimi）"):
+#             with st.spinner("正在生成 PPT…"):
+#                 ppt_url = generate_ppt_with_kimi(lesson_title, st.session_state["lesson_text"])
+#                 st.session_state["ppt_url"] = ppt_url
+#             st.success("✅ PPT 已生成！")
+#
+#         # 教案已生成 → 清空按钮显示在生成 PPT 后
+#         if st.button("🗑️ 清空教案与 PPT"):
+#             st.session_state.pop("lesson_text", None)
+#             st.session_state.pop("ppt_url", None)
+#             st.success("已清空教案与 PPT，可重新生成。")
+#
+#         # 下载 PPT
+#         if st.session_state.get("ppt_url"):
+#             st.markdown(f"[📥 下载 PPT]({st.session_state['ppt_url']})")
+#
+# # ----------------------
+# # 右侧：苏格拉底式问答
+# # ----------------------
+# with col2:
+#     st.header("苏格拉底式问答")
+#
+#     if "chat_history" not in st.session_state:
+#         st.session_state["chat_history"] = []
+#
+#     # 1️⃣ 显示历史
+#     for q, a in st.session_state["chat_history"]:
+#         st.markdown(f"**学生:** {q}")
+#         st.markdown(f"**AI:** {a}")
+#
+#     # 2️⃣ 使用表单封装输入框 + 提问按钮
+#     with st.form(key="socratic_form"):
+#         user_question = st.text_input(
+#             "向AI提问",
+#             placeholder="在此输入问题..."
+#         )
+#         ask_button = st.form_submit_button("💬 提问")
+#
+#         if ask_button and user_question.strip():
+#             with st.spinner("🧠 AI 正在思考中，请稍候..."):
+#                 answer = ask_socratic(st.session_state.get("lesson_text",""), user_question)
+#             st.session_state["chat_history"].append((user_question, answer))
+#             # ✅ 使用表单提交后自动刷新，无需调用 experimental_rerun
+#             # 输入框会自动清空，下移到会话记录下方
+#
+
+
 import streamlit as st
-import openai
+from lesson_plan_generator import generate_lesson_plan
+from socratic_ai import ask_socratic
+from kimi_ppt import generate_ppt_with_kimi
 from datetime import date
 
-# Set your OpenAI API key
-openai.api_key = "your_openai_api_key"  
+# ======================
+# Streamlit 页面配置
+# ======================
+st.set_page_config(page_title="教学方案 + 苏格拉底问答", layout="wide")
+st.title("📚 AI 教学方案 + 苏格拉底问答")
 
-# Define the system message for lesson generation
-system_message = """
-You are an AI English teacher who is really good and knows how to teach children of all standards. You will be provided with lesson strategy plan queries. You have to assist teachers and schools to make 
-new lesson plans that are more interactive for students. Explain all following processes in detail so teachers 
-will understand what you mean and what to do. Also provide a strategy so teachers will know step-wise when and what to show, for example, the video you provide.
-
-The lesson strategy plan query will be delimited with #### characters.
-
-You will get input in JSON format from users that are school teachers in the following format:
-'Lesson Title': <It will be the string that describes the lesson title>
-'Subject': <The user will give you the Subject name>
-'Grade': <The user will provide which grade the students are, so you have to explain it related to the respective grade and consider the student understanding at that age>
-'Duration': <Will be an integer, for example 1 or 2, based on the integer provided you have to write a lesson strategy plan. Keep in mind each session is 50 minutes>
-'Key vocabulary': <It will be in python list format that gives you an understanding of which part to focus on more.>
-'Supporting Materials and resources': <It will be the options like video, Microsoft office, etc. If any are available, you have to use that method or tools in strategy material. For video, you have to suggest a video or tutorial from the internet.>
-
-You have to give a lesson plan that will help teachers to teach the topic in their classrooms.
-
-NOTE: The output should be in a detailed lesson plan format for easy reading and application in a classroom.
-"""
-
-delimiter = "####"
-
-# Function to get a response from OpenAI based on messages
-@st.cache_data
-def get_completion_from_messages(messages, model="gpt-3.5-turbo", temperature=0.7, max_tokens=1900):
-    try:
-        response = openai.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        st.error(f"An error occurred while generating the lesson plan: {str(e)}")
-        return None
-
-# Streamlit app starts here
-st.set_page_config(page_title="Lesson Plan Generator", page_icon="📚", layout="wide")
-st.title("📚 Lesson Plan Generator")
-st.write("Enter the details below to generate a comprehensive lesson plan.")
-
-# Create two columns for input fields
 col1, col2 = st.columns(2)
 
+# ----------------------
+# 左侧：教案 + Kimi PPT
+# ----------------------
 with col1:
-    lesson_title = st.text_input("Lesson Title", help="Enter the title of your lesson")
-    subject = st.text_input("Subject", help="Enter the subject of the lesson")
-    grade = st.number_input("Grade", min_value=1, max_value=12, step=1, help="Select the grade level")
+    st.header("生成教案")
+    lesson_title = st.text_input("课程名称", placeholder="例如：光合作用")
+    subject = st.text_input("学科", placeholder="例如：生物")
+    grade = st.number_input("年级", 1, 12)
+    duration = st.number_input("课时数", 1, 10)
+    key_vocab = st.text_input("关键词汇，用逗号分隔")
+    supporting_materials = st.text_area("辅助材料与资源，用逗号分隔")
 
-with col2:
-    duration = st.number_input("Duration (in hours)", min_value=1, max_value=10, step=1, help="Enter the duration of the lesson in hours")
-    key_vocabulary = st.text_input("Key Vocabulary", help="Enter key vocabulary words, separated by commas")
-    supporting_materials = st.text_area("Supporting Materials and Resources", help="List any supporting materials or resources, separated by commas")
-
-# When user submits the form
-if st.button("Generate Lesson Plan", type="primary"):
-    with st.spinner("Generating your lesson plan... This may take a moment."):
-        # Parse inputs
-        key_vocabulary_list = [item.strip() for item in key_vocabulary.split(",")]
-        materials_list = [item.strip() for item in supporting_materials.split(",")]
-
-        # Prepare user message for OpenAI
-        user_message = f""""Lesson Title": "{lesson_title}"\n"Subject": "{subject}"\n"Grade": "{grade}"
-        \n"Duration": "{duration}"\n"Key Vocabulary": {key_vocabulary_list}
-        \n"Supporting Materials and Resources": {materials_list}"""
-
-        messages = [
-            {'role': 'system', 'content': system_message},
-            {'role': 'user', 'content': f"{delimiter}{user_message}{delimiter}"},
-        ]
-
-        # Get response from OpenAI
-        lesson_plan_response = get_completion_from_messages(messages)
-        
-        if lesson_plan_response:
-            st.success("Lesson Plan Generated Successfully!")
-            
-            # Display the lesson plan in a more structured way
-            st.subheader("📘 Lesson Plan")
-            st.markdown(lesson_plan_response, unsafe_allow_html=True)
-
-            # Option to download the lesson plan as a text file
-            st.download_button(
-                label="Download Lesson Plan (Text)",
-                data=lesson_plan_response,
-                file_name=f"lesson_plan_{date.today()}.txt",
-                mime="text/plain"
-            )
+    # 生成教案按钮
+    if st.button("🚀 生成教案"):
+        if not lesson_title or not subject:
+            st.warning("请填写课程名称和学科")
         else:
-            st.warning("Failed to generate the lesson plan. Please try again.")
+            with st.spinner("🧠 AI 正在生成教案，请稍候..."):
+                lesson_text = generate_lesson_plan(
+                    lesson_title, subject, grade, duration,
+                    key_vocab, supporting_materials
+                )
+                st.session_state["lesson_text"] = lesson_text
+            st.success("✅ 教案生成完成！")
 
-st.markdown("<br><br>", unsafe_allow_html=True)
+    # 教案未生成 → 清空按钮显示在生成教案下
+    if "lesson_text" not in st.session_state:
+        if st.button("🗑️ 清空教案与 PPT"):
+            st.session_state.pop("lesson_text", None)
+            st.session_state.pop("ppt_url", None)
+            st.success("已清空教案与 PPT，可重新生成。")
 
-# Footer
-st.markdown("---")
-st.markdown("Created with ❤️ by Your AI Lesson Planner")
+    # 显示教案
+    if "lesson_text" in st.session_state:
+        st.subheader("📘 教学方案")
+        st.markdown(st.session_state["lesson_text"])
+        st.download_button(
+            "📥 下载教案文本",
+            data=st.session_state["lesson_text"],
+            file_name=f"教学方案_{date.today()}.txt",
+            mime="text/plain"
+        )
+
+        # Kimi PPT 生成按钮
+        if st.button("🎨 生成 PPT（Kimi）"):
+            with st.spinner("正在生成 PPT…"):
+                ppt_url = generate_ppt_with_kimi(lesson_title, st.session_state["lesson_text"])
+                st.session_state["ppt_url"] = ppt_url
+            st.success("✅ PPT 已生成！")
+
+        # 教案已生成 → 清空按钮显示在生成 PPT 后
+        if st.button("🗑️ 清空教案与 PPT"):
+            st.session_state.pop("lesson_text", None)
+            st.session_state.pop("ppt_url", None)
+            st.success("已清空教案与 PPT，可重新生成。")
+
+        # 下载 PPT
+        if st.session_state.get("ppt_url"):
+            st.markdown(f"[📥 下载 PPT]({st.session_state['ppt_url']})")
+
+# ----------------------
+# 右侧：苏格拉底式问答（修复版本）
+# ----------------------
+with col2:
+    st.header("苏格拉底式问答")
+
+    if "chat_history" not in st.session_state:
+        st.session_state["chat_history"] = []
+
+    # 提问框和按钮始终在会话记录上方
+    with st.form(key="socratic_form_top"):
+        user_question = st.text_input(
+            "向AI提问",
+            placeholder="在此输入问题...",
+            key="user_question_top"
+        )
+        ask_button = st.form_submit_button("💬 提问")
+
+        if ask_button and user_question.strip():
+            with st.spinner("🧠 AI 正在思考中，请稍候..."):
+                answer = ask_socratic(st.session_state.get("lesson_text",""), user_question)
+            st.session_state["chat_history"].append((user_question, answer))
+            # 使用st.rerun()替代已弃用的experimental_rerun()
+            st.rerun()
+
+    # 显示历史记录
+    if st.session_state["chat_history"]:
+        st.subheader("对话记录")
+        # 反向显示，最新的在最上面
+        for q, a in reversed(st.session_state["chat_history"]):
+            st.markdown(f"**学生:** {q}")
+            st.markdown(f"**AI:** {a}")
+            st.markdown("---")
