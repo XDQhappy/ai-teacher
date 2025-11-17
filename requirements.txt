@@ -1,2 +1,8 @@
 streamlit==1.24.1
 openai==0.28.0
+streamlit==1.30.0
+numpy
+opencv-python-headless
+torch==2.1.0
+torchvision==0.16.0
+Pillow
