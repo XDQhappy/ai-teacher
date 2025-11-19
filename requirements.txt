@@ -1,16 +1,12 @@
-# === Streamlit (支持 Python 3.13 + numpy2 + pillow11) ===
-streamlit==1.35.0
-
-# === AI 调用 ===
-openai==1.53.0
-
-# === 基础依赖 ===
-numpy==2.1.2
-pandas==2.2.3
-requests==2.32.3
-
+streamlit
+openai>=1.51.0
+httpx>=0.27.0
+python-docx
+numpy
+pandas
+requests
 # === 图像处理 ===
-Pillow==11.0.0
+Pillow
 opencv-python-headless==4.10.0.84
 
 # === 文档处理 ===
