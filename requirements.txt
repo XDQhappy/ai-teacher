@@ -1,19 +1,23 @@
-# Streamlit 框架
-streamlit
+# Streamlit
+streamlit==1.33.0
 
-# OpenAI API
-openai>=1.51.0
+# OpenAI 最新版本（兼容 Python 3.13）
+openai==1.53.0
 
-# 数值计算
-numpy
+# 基础依赖
+numpy==2.1.2
+pandas==2.2.3
 
-pandas
+# 图像处理（兼容 3.13）
+Pillow==11.0.0
 
-# 图像处理
-opencv-python-headless==4.8.1.78
-Pillow==10.0.0
+# OpenCV（有 py3.13 预编译包）
+opencv-python-headless==4.10.0.84
 
-# PDF / Word / PPT 读取
-pdfplumber>=0.9.0
-python-docx>=0.8.11
-python-pptx>=0.6.21
+# 文档/PDF 处理
+python-docx==1.1.2
+pdfplumber==0.11.3
+python-pptx==1.0.2
+
+# 后端工具
+requests==2.32.3
