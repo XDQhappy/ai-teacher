@@ -23,6 +23,9 @@ with col1:
     grade = st.number_input("年级", min_value=1, max_value=12, key="grade_input")
     duration = st.number_input("课时数", min_value=1, max_value=10, key="duration_input")
     key_vocab = st.text_input("关键词汇，用逗号分隔", key="key_vocab_input")
+    teaching_goals = st.text_area("教学目标（可选）", key="teaching_goals_input")
+    teaching_focus = st.text_area("教学重点（可选）", key="teaching_focus_input")
+    teaching_difficulties = st.text_area("教学难点（可选）", key="teaching_difficulties_input")
     supporting_materials = st.text_area("辅助材料与资源，用逗号分隔", key="supporting_materials_input")
 
     # 生成教案按钮
@@ -33,7 +36,8 @@ with col1:
             with st.spinner("🧠 AI 正在生成教案，请稍候..."):
                 lesson_text = generate_lesson_plan(
                     lesson_title, subject, grade, duration,
-                    key_vocab, supporting_materials
+                    key_vocab, supporting_materials,
+                    teaching_goals, teaching_focus, teaching_difficulties
                 )
                 st.session_state["lesson_text"] = lesson_text
             st.success("✅ 教案生成完成！")
