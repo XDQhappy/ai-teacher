@@ -1,6 +1,7 @@
 # lesson_plan_generator.py
 from openai import OpenAI
 import streamlit as st
+import json
 
 # 从 Streamlit secrets 获取 DeepSeek API Key
 api_key = st.secrets.get("DEEPSEEK_API_KEY", "").strip()
